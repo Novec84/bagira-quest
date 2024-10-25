@@ -25,16 +25,16 @@ LRESULT CALLBACK WindowFunction(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 			PostQuitMessage(0);
 			return 0;
 		case WM_LBUTTONUP:
-			window->ProcessLeftClick((int)(lParam & 0xFFFF), (int)(lParam >> 16));
+			window->LeftClick((int)(lParam & 0xFFFF), (int)(lParam >> 16));
 			break;
 		case WM_KEYDOWN:
-			window->ProcessKeyDown((unsigned)wParam);
+			window->KeyDown((unsigned)wParam);
 			break;
 		case WM_KEYUP:
 			if (wParam == VK_ESCAPE)
 				PostQuitMessage(0);
 			else
-				window->ProcessKeyUp((unsigned)wParam);
+				window->KeyUp((unsigned)wParam);
 			break;
 		default:
 			break;
@@ -245,11 +245,11 @@ void Window::Draw()
 	SwapBuffers(hDC);
 }
 
-void Window::ProcessLeftClick(int xPos, int yPos)
+void Window::LeftClick(int xPos, int yPos)
 {
 }
 
-void Window::ProcessKeyDown(unsigned keyCode)
+void Window::KeyDown(unsigned keyCode)
 {
 	switch (keyCode)
 	{
@@ -262,7 +262,7 @@ void Window::ProcessKeyDown(unsigned keyCode)
 	}
 }
 
-void Window::ProcessKeyUp(unsigned keyCode)
+void Window::KeyUp(unsigned keyCode)
 {
 	switch (keyCode)
 	{

@@ -44,9 +44,9 @@ namespace Arkanoid
 		void Update();
 		void Draw();
 
-		void ProcessLeftClick(int xPos, int yPos);
-		void ProcessKeyDown(unsigned keyCode);
-		void ProcessKeyUp(unsigned keyCode);
+		void LeftClick(int xPos, int yPos);
+		void KeyDown(unsigned keyCode);
+		void KeyUp(unsigned keyCode);
 	};
 
 }
