@@ -1,20 +1,23 @@
 
-#ifndef WINDOWH
-
-#define WINDOWH
+#pragma once
 
 #include <windows.h>
+
+#include "Game.h"
 
 namespace Arkanoid
 {
 
 	class Window
 	{
-		static constexpr auto className = L"arkanoid-window";
+		HWND		hWnd;
+		HDC			hDC;
+		HGLRC		hRC;
+		HFONT		hFont;
+		unsigned	uFontBase;
+		ABC			glyphInfo[256];
 
-		HWND	hWnd;
-		HDC		hDC;
-		HGLRC	hRC;
+		Game	game;
 	public:
 		enum Error
 		{
@@ -24,6 +27,8 @@ namespace Arkanoid
 			SETPIXELFORMAT,
 			CREATERC,
 			MAKECURRENTRC,
+			CREATEFONT,
+			USEFONT,
 
 			NONE
 		};
@@ -35,14 +40,14 @@ namespace Arkanoid
 		Window();
 		~Window();
 
-		Error Create(const wchar_t * pTitle, int iW, int iH);
+		Error Create(const wchar_t* pTitle, int iW, int iH, const wchar_t* pFontName);
 		void Destroy();
+		void Init(int iW, int iH);
 		void Show();
 		void Hide();
-		void Init();
 		void Resize(int iW, int iH);
-		void Update();
 		void Draw();
+		void Update();
 
 		void LeftClick(int xPos, int yPos);
 		void KeyDown(unsigned keyCode);
@@ -50,5 +55,3 @@ namespace Arkanoid
 	};
 
 }
-#endif
-

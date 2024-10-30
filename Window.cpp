@@ -2,9 +2,11 @@
 
 #include "Window.h"
 
-#include <gl/gl.h>
+#include <gl/GL.h>
 
 using namespace Arkanoid;
+
+constexpr auto CLASSNAME = L"arkanoid-window";
 
 static Window* window = NULL;
 
@@ -54,13 +56,13 @@ bool Window::Register()
 	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wc.hbrBackground = NULL;
 	wc.lpszMenuName = NULL;
-	wc.lpszClassName = className;
+	wc.lpszClassName = CLASSNAME;
 	return (bool)RegisterClass(&wc);
 }
 
 void Window::Unregister()
 {
-	UnregisterClass(className, GetModuleHandle(NULL));
+	UnregisterClass(CLASSNAME, GetModuleHandle(NULL));
 }
 
 const wchar_t* Window::GetErrorText(Window::Error errorId)
@@ -79,6 +81,10 @@ const wchar_t* Window::GetErrorText(Window::Error errorId)
 		return L"Resource context creation failed";
 	case MAKECURRENTRC:
 		return L"Cannot make resource context as current";
+	case CREATEFONT:
+		return L"Font creation failed";
+	case USEFONT:
+		return L"Cannot use font";
 	}
 	return L"";
 }
@@ -86,9 +92,13 @@ const wchar_t* Window::GetErrorText(Window::Error errorId)
 Window::Window()
 	: hWnd(NULL),
 		hDC(NULL),
-		hRC(NULL)
+		hRC(NULL),
+		hFont(NULL),
+		uFontBase(0),
+		game()
 {
 	window = this;
+	memset(&glyphInfo[0], 0, 256 * sizeof(ABC));
 }
 
 Window::~Window()
@@ -97,7 +107,7 @@ Window::~Window()
 }
 
 
-Window::Error Window::Create(const wchar_t* pTitle, int iW, int iH)
+Window::Error Window::Create(const wchar_t* pTitle, int iW, int iH, const wchar_t* pFontName)
 {
 	static	PIXELFORMATDESCRIPTOR pfd =
 	{
@@ -137,7 +147,7 @@ Window::Error Window::Create(const wchar_t* pTitle, int iW, int iH)
 
 	hWnd = CreateWindowEx(
 					extStyle,
-					className,
+					CLASSNAME,
 					pTitle,
 					style | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
 					0, 0, wndRect.right - wndRect.left, wndRect.bottom - wndRect.top,
@@ -163,11 +173,46 @@ Window::Error Window::Create(const wchar_t* pTitle, int iW, int iH)
 	if (!wglMakeCurrent(hDC, hRC))
 		return MAKECURRENTRC;
 
+	hFont = CreateFont((int)Game::fontHeight,
+		0,
+		0,
+		0,
+		FW_BOLD,
+		FALSE,// cursive
+		FALSE,// underscore
+		FALSE,// crossed
+		ANSI_CHARSET,
+		OUT_TT_PRECIS,
+		CLIP_DEFAULT_PRECIS,
+		ANTIALIASED_QUALITY,
+		FF_DONTCARE | DEFAULT_PITCH,
+		pFontName);
+	if (!hFont)
+		return CREATEFONT;
+	SelectObject(hDC, hFont);
+
+	uFontBase = glGenLists(256);
+	if (!wglUseFontBitmaps(hDC, 0, 255, uFontBase))
+		return USEFONT;
+	GetCharABCWidths(hDC, 0, 255, &glyphInfo[0]);
+
 	return NONE;
 }
 
 void Window::Destroy()
 {
+	if (uFontBase)
+	{
+		glDeleteLists(uFontBase, 256);
+		uFontBase = 0;
+	}
+
+	if (hFont)
+	{
+		DeleteObject(hFont);
+		hFont = NULL;
+	}
+
 	if (hRC)
 	{
 		wglMakeCurrent(NULL, NULL);
@@ -187,6 +232,10 @@ void Window::Destroy()
 		hWnd = NULL;
 	}
 }
+void Window::Init(int iW, int iH)
+{
+	game.Init(iW, iH, uFontBase, &glyphInfo[0]);
+}
 
 void Window::Show()
 {
@@ -198,55 +247,25 @@ void Window::Hide()
 	ShowWindow(hWnd, SW_HIDE);
 }
 
-void Window::Init()
-{
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-}
-
 void Window::Resize(int iW, int iH)
 {
-	glViewport(0, 0, iW, iH);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(0.0, iW, iH, 0.0, -1.0, 1.0);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-}
-
-void Window::Update()
-{
+	game.Resize(iW, iH);
 }
 
 void Window::Draw()
 {
-	glClear(GL_COLOR_BUFFER_BIT);
-
-	glBegin(GL_POLYGON);
-		glColor3f(0.2f, 0.2f, 0.2f);
-		glVertex2d(10.0, 0.0);
-		glColor3f(1.0f, 1.0f, 1.0f);
-		glVertex2d(1014.0, 0.0);
-		glColor3f(0.2f, 0.2f, 0.2f);
-		glVertex2d(1014.0, 200.0);
-		glColor3f(1.0f, 1.0f, 1.0f);
-		glVertex2d(10.0, 200.0);
-	glEnd();
-
-	glBegin(GL_POLYGON);
-		glColor4d(1.0, 0.0, 0.0, 0.2);
-		glVertex2d(400.0, 50.0);
-		glVertex2d(600.0, 50.0);
-		glVertex2d(600.0, 500.0);
-		glVertex2d(400.0, 500.0);
-	glEnd();
-
+	game.Draw();
 	SwapBuffers(hDC);
+}
+
+void Window::Update()
+{
+	game.Update();
 }
 
 void Window::LeftClick(int xPos, int yPos)
 {
+	game.HandleLeftClick(xPos, yPos);
 }
 
 void Window::KeyDown(unsigned keyCode)
@@ -254,8 +273,10 @@ void Window::KeyDown(unsigned keyCode)
 	switch (keyCode)
 	{
 	case VK_LEFT:
+		game.SetReflectorDirection(-1.0);
 		break;
 	case VK_RIGHT:
+		game.SetReflectorDirection(1.0);
 		break;
 	default:
 		break;
@@ -267,10 +288,11 @@ void Window::KeyUp(unsigned keyCode)
 	switch (keyCode)
 	{
 	case VK_LEFT:
-		break;
 	case VK_RIGHT:
+		game.SetReflectorDirection(0.0);
 		break;
 	case VK_SPACE:
+		game.HandleSpacePress();
 		break;
 	default:
 		break;

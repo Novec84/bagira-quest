@@ -1,12 +1,15 @@
 
 #include "Window.h"
 
+#include <time.h>
+
 using namespace Arkanoid;
 
 constexpr auto WINDOWTITLE = L"Arkanoid";
-constexpr auto WINDOWWIDTH = 1024;
-constexpr auto WINDOWHEIGHT = 768;
-constexpr auto WINDOWFPS = 20;
+constexpr int WINDOWWIDTH = 1024;
+constexpr int WINDOWHEIGHT = 768;
+constexpr auto FONTNAME = L"Arial";// L"Courier New";
+constexpr int WINDOWFPS = 20;
 
 int main()
 {
@@ -16,20 +19,22 @@ int main()
 	Window::Error error;
 	int     sleepTime = 1000 / WINDOWFPS;
 
+	srand((unsigned)time(NULL));
+
 	if (!Window::Register())
 	{
 		MessageBox(NULL, L"Window registration failed", L"Error", MB_OK | MB_ICONERROR);
 		return -1;
 	}
 
-	error = window.Create(WINDOWTITLE, WINDOWWIDTH, WINDOWHEIGHT);
+	error = window.Create(WINDOWTITLE, WINDOWWIDTH, WINDOWHEIGHT, FONTNAME);
 	if (error != Window::NONE)
 	{
 		MessageBox(NULL, Window::GetErrorText(error), L"Error", MB_OK | MB_ICONERROR);
 		return -1;
 	}
 
-	window.Init();
+	window.Init(WINDOWWIDTH, WINDOWHEIGHT);
 	window.Show();
 
 	while (bWork)
