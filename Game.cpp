@@ -1,8 +1,8 @@
 #include "Game.h"
 
 #include <gl/gl.h>
-
 #include <cstdarg>
+
 
 using namespace Arkanoid;
 
@@ -19,9 +19,7 @@ Game::Game()
 		width(0.0),
 		height(0.0),
 		balls(BALLCOUNT),
-		score(0),
-		fontBase(0),
-		glyphInfo(NULL)
+		score(0)
 {
 }
 
@@ -46,12 +44,10 @@ void Game::PrepareToStart(bool restart)
 	}
 }
 
-void Game::Init(int iW, int iH, unsigned uFontBase, const ABC* pGlyphInfo)
+void Game::Init(int iW, int iH)
 {
 	width = iW;
 	height = iH;
-	fontBase = uFontBase;
-	glyphInfo = pGlyphInfo;
 	bricks.SetWidth(iW);
 	state = PREPARED;
 	PrepareToStart(true);
@@ -161,7 +157,7 @@ void Game::DrawFooter() const
 	glEnd();
 
 	glColor3d(1.0, 1.0, 1.0);
-	DrawString(footerPadding, height - footerPadding, "SCORE: %d", score);
+	Texts::DrawText(footerPadding, height - footerPadding, "SCORE: %d", score);
 
 	Ball drawnBall;
 	drawnBall.position = Geometry::Point(width - footerPadding - Ball::radius, height - footerHeight / 2.0);
@@ -182,80 +178,58 @@ void Game::DrawInfo() const
 		glVertex2d(0.0, height - footerHeight);
 	glEnd();
 
-	double infoHeight = 5 * fontHeight; //title + separator + esc keypress + two choices in all cases
-	double h = (height - infoHeight) / 2.0;
+	double infoHeight = 5 * Texts::fontHeight; //title + separator + esc keypress + two choices in all cases
+	double x = 0;
+	double y = (height - infoHeight) / 2.0;
 	
 	glColor3d(1.0, 1.0, 0.0);
-	DrawCenteredString(h, "ARKANOID");
-	h += fontHeight;
-	DrawCenteredString(h, "----------------------------------");
-	h += fontHeight;
+	y += Texts::fontHeight;
+	DrawCenteredText(y, "ARKANOID");
+	y += Texts::fontHeight;
+	DrawCenteredText(y, "----------------------------------");
+	y += Texts::fontHeight;
 	glColor3d(1.0, 1.0, 1.0);
 	switch (state)
 	{
 	case PAUSED:
-		DrawCenteredString(h, "change ball direction by [LEFT CLICK]");
-		h += fontHeight;
-		DrawCenteredString(h, "press [SPACE] to continue");
+		DrawCenteredText(y, "change ball direction by [LEFT CLICK]");
+		y += Texts::fontHeight;
+		DrawCenteredText(y, "press [SPACE] to continue");
 		break;
 	case PREPARED:
-		DrawCenteredString(h, "change ball direcction by [LEFT CLICK]");
-		h += fontHeight;
-		DrawCenteredString(h, "press [SPACE] to start");
+		DrawCenteredText(y, "change ball direcction by [LEFT CLICK]");
+		y += Texts::fontHeight;
+		DrawCenteredText(y, "press [SPACE] to start");
 		break;
 	case WIN:
 		glColor3d(0.0, 0.8, 0.0);
-		DrawCenteredString(h, "YOU WIN, your score is %d", score);
-		h += fontHeight;
+		DrawCenteredText(y, "YOU WIN, your score is %d", score);
+		y += Texts::fontHeight;
 		glColor3d(1.0, 1.0, 1.0);
-		DrawCenteredString(h, "press [SPACE] to continue");
+		DrawCenteredText(y, "press [SPACE] to continue");
 		break;
 	case LOOSE:
 		glColor3d(0.8, 0.0, 0.0);
-		DrawCenteredString(h, "YOU LOOSE");
-		h += fontHeight;
+		DrawCenteredText(y, "YOU LOOSE");
+		y += Texts::fontHeight;
 		glColor3d(1.0, 1.0, 1.0);
-		DrawCenteredString(h, "press [SPACE] to continue");
+		DrawCenteredText(y, "press [SPACE] to continue");
 		break;
 	}
-	h += fontHeight;
-	DrawCenteredString(h, "press [ESC] to exit");
+	y += Texts::fontHeight;
+	DrawCenteredText(y, "press [ESC] to exit");
 }
 
-void Game::DrawString(double xPos, double yPos, const char* fmt, ...) const
+void Game::DrawCenteredText(double y, const char* fmt, ...) const
 {
-	if (!(fontBase && glyphInfo && fmt))
-		return;
-
 	char text[256];
 	std::va_list args;
 	va_start(args, fmt);
 	vsnprintf(text, 256, fmt, args);
 	va_end(args);
 
-	glRasterPos2d(xPos, yPos);
-	glPushAttrib(GL_LIST_BIT);
-		glListBase(fontBase);
-		glCallLists((GLsizei)strlen(text), GL_UNSIGNED_BYTE, text);
-	glPopAttrib();
-}
-
-void Game::DrawCenteredString(double yPos, const char* fmt, ...) const
-{
-	if (!(fontBase && glyphInfo && fmt))
-		return;
-
-	char text[256];
-	std::va_list args;
-	va_start(args, fmt);
-	vsnprintf(text, 256, fmt, args);
-	va_end(args);
-
-	int w = 0;
-	for (int i = 0; i < strlen(text); i++)
-		w += glyphInfo[text[i]].abcA + glyphInfo[text[i]].abcB + glyphInfo[text[i]].abcC;
-
-	DrawString((width - w) / 2.0, yPos, text);
+	double x = (width - Texts::GetTextWidth(text)) / 2.0;
+	Texts::DrawText(x, y, text);
 }
 
 void Game::HandleSpacePress()

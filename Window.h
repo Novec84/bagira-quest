@@ -13,9 +13,6 @@ namespace Arkanoid
 		HWND		hWnd;
 		HDC			hDC;
 		HGLRC		hRC;
-		HFONT		hFont;
-		unsigned	uFontBase;
-		ABC			glyphInfo[256];
 
 		Game	game;
 	public:
@@ -27,8 +24,7 @@ namespace Arkanoid
 			SETPIXELFORMAT,
 			CREATERC,
 			MAKECURRENTRC,
-			CREATEFONT,
-			USEFONT,
+			CREATETEXTS,
 
 			NONE
 		};
@@ -40,7 +36,7 @@ namespace Arkanoid
 		Window();
 		~Window();
 
-		Error Create(const wchar_t* pTitle, int iW, int iH, const wchar_t* pFontName);
+		Error Create(const wchar_t* pTitle, int iW, int iH);
 		void Destroy();
 		void Init(int iW, int iH);
 		void Show();

@@ -8,7 +8,6 @@ using namespace Arkanoid;
 constexpr auto WINDOWTITLE = L"Arkanoid";
 constexpr int WINDOWWIDTH = 1024;
 constexpr int WINDOWHEIGHT = 768;
-constexpr auto FONTNAME = L"Arial";// L"Courier New";
 constexpr int WINDOWFPS = 20;
 
 int main()
@@ -27,7 +26,7 @@ int main()
 		return -1;
 	}
 
-	error = window.Create(WINDOWTITLE, WINDOWWIDTH, WINDOWHEIGHT, FONTNAME);
+	error = window.Create(WINDOWTITLE, WINDOWWIDTH, WINDOWHEIGHT);
 	if (error != Window::NONE)
 	{
 		MessageBox(NULL, Window::GetErrorText(error), L"Error", MB_OK | MB_ICONERROR);

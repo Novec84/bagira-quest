@@ -1,8 +1,7 @@
 
 
 #include "Window.h"
-
-#include <gl/GL.h>
+#include "Texts.h"
 
 using namespace Arkanoid;
 
@@ -81,10 +80,8 @@ const wchar_t* Window::GetErrorText(Window::Error errorId)
 		return L"Resource context creation failed";
 	case MAKECURRENTRC:
 		return L"Cannot make resource context as current";
-	case CREATEFONT:
-		return L"Font creation failed";
-	case USEFONT:
-		return L"Cannot use font";
+	case CREATETEXTS:
+		return L"Texts support creation failed";
 	}
 	return L"";
 }
@@ -93,12 +90,9 @@ Window::Window()
 	: hWnd(NULL),
 		hDC(NULL),
 		hRC(NULL),
-		hFont(NULL),
-		uFontBase(0),
 		game()
 {
 	window = this;
-	memset(&glyphInfo[0], 0, 256 * sizeof(ABC));
 }
 
 Window::~Window()
@@ -107,7 +101,7 @@ Window::~Window()
 }
 
 
-Window::Error Window::Create(const wchar_t* pTitle, int iW, int iH, const wchar_t* pFontName)
+Window::Error Window::Create(const wchar_t* pTitle, int iW, int iH)
 {
 	static	PIXELFORMATDESCRIPTOR pfd =
 	{
@@ -173,45 +167,15 @@ Window::Error Window::Create(const wchar_t* pTitle, int iW, int iH, const wchar_
 	if (!wglMakeCurrent(hDC, hRC))
 		return MAKECURRENTRC;
 
-	hFont = CreateFont((int)Game::fontHeight,
-		0,
-		0,
-		0,
-		FW_BOLD,
-		FALSE,// cursive
-		FALSE,// underscore
-		FALSE,// crossed
-		ANSI_CHARSET,
-		OUT_TT_PRECIS,
-		CLIP_DEFAULT_PRECIS,
-		ANTIALIASED_QUALITY,
-		FF_DONTCARE | DEFAULT_PITCH,
-		pFontName);
-	if (!hFont)
-		return CREATEFONT;
-	SelectObject(hDC, hFont);
-
-	uFontBase = glGenLists(256);
-	if (!wglUseFontBitmaps(hDC, 0, 255, uFontBase))
-		return USEFONT;
-	GetCharABCWidths(hDC, 0, 255, &glyphInfo[0]);
+	if (!Texts::Create(hDC))
+		return CREATETEXTS;
 
 	return NONE;
 }
 
 void Window::Destroy()
 {
-	if (uFontBase)
-	{
-		glDeleteLists(uFontBase, 256);
-		uFontBase = 0;
-	}
-
-	if (hFont)
-	{
-		DeleteObject(hFont);
-		hFont = NULL;
-	}
+	Texts::Destroy();
 
 	if (hRC)
 	{
@@ -234,7 +198,7 @@ void Window::Destroy()
 }
 void Window::Init(int iW, int iH)
 {
-	game.Init(iW, iH, uFontBase, &glyphInfo[0]);
+	game.Init(iW, iH);
 }
 
 void Window::Show()
