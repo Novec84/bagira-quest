@@ -192,14 +192,10 @@ void Game::DrawInfo() const
 	switch (state)
 	{
 	case PAUSED:
+	case PREPARED:
 		DrawCenteredText(y, "change ball direction by [LEFT CLICK]");
 		y += Texts::fontHeight;
-		DrawCenteredText(y, "press [SPACE] to continue");
-		break;
-	case PREPARED:
-		DrawCenteredText(y, "change ball direcction by [LEFT CLICK]");
-		y += Texts::fontHeight;
-		DrawCenteredText(y, "press [SPACE] to start");
+		DrawCenteredText(y, "press [SPACE] or [LEFT CLICK] to continue");
 		break;
 	case WIN:
 		glColor3d(0.0, 0.8, 0.0);
