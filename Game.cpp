@@ -261,8 +261,16 @@ void Game::HandleSpacePress()
 
 void Game::HandleLeftClick(int xPos, int yPos)
 {
-	if (state != PLAYING)
-		return;
-	ball.direction = Geometry::Vector(ball.position, Geometry::Point(xPos, yPos));
-	ball.direction.Normalize();
+	switch (state)
+	{
+	case PREPARED:
+	case PAUSED:
+		state = PLAYING;
+	case PLAYING:
+		ball.direction = Geometry::Vector(ball.position, Geometry::Point(xPos, yPos));
+		ball.direction.Normalize();
+		break;
+	default:
+		break;
+	}
 }
